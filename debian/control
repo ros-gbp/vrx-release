@@ -1,0 +1,12 @@
+Source: ros-melodic-wamv-gazebo
+Section: misc
+Priority: extra
+Maintainer: Carlos Aguero <caguero@osrfoundation.org>
+Build-Depends: debhelper (>= 9.0.0), ros-melodic-catkin, ros-melodic-gazebo-plugins, ros-melodic-hector-gazebo-plugins, ros-melodic-robot-localization, ros-melodic-usv-gazebo-plugins, ros-melodic-velodyne-gazebo-plugins, ros-melodic-wamv-description, ros-melodic-xacro
+Homepage: http://wiki.ros.org/wamv_gazebo
+Standards-Version: 3.9.2
+
+Package: ros-melodic-wamv-gazebo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-gazebo-plugins, ros-melodic-hector-gazebo-plugins, ros-melodic-robot-localization, ros-melodic-usv-gazebo-plugins, ros-melodic-velodyne-gazebo-plugins, ros-melodic-wamv-description, ros-melodic-xacro
+Description: Provides templates and examples for integrating the WAM-V model into gazebo with dynamics, sensors, etc.
