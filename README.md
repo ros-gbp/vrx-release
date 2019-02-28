@@ -1,46 +1,26 @@
-# vrx_gazebo
+# Virtual RobotX (VRX)
 
-## Description
-This package provides gazebo models, plugins, and examples for simulating the [RobotX challenge](https://www.robotx.org/index.php/2014-01-05-21-55-32/2016-rules-requirements) within Gazebo using ROS.
+This is the entry point for teams participating in the current [RobotX Maritime Challenge](http://robotx.org/) or the upcoming Virtual RobotX Challenge (VRX) in 2019.  The repository includes a set of Gazebo simulation elements and examples to support development of RobotX systems.
 
-## Usage
-To launch gazebo with an example course layout and WAM-V platform, run:
+This is an active development project.  We are adding and improving things all the time.  The project contains a simulation foundation, including an environment similar to the RobotX venue and description of the WAM-V platform.  It is intended as a first step for teams that would then extend the tools for their specific development needs.
 
-```roslaunch vrx_gazebo sandisland.launch```
+ * Watch the [Release 0.2 Highlight Video](https://youtu.be/QvottL9P75M)
 
+![VRX](images/vrx.jpg)
 
-## Course models
-The following models are used in the RobotX challenge and will be included in this package.
+## Getting Started
 
-| Task Element                 | Product                  | Status | Model  |
-|:-----------------------------|:-------------------------|:-------|:-------|
-| Light Buoy                   | Custom                   | ADDED  | robotx_light_buoy |
-| Obstacle - Small             | PolyForm A-3 black       | ADDED  | polyform_a3 |
-| Obstacle - Medium            | PolyForm A-5 black       | ADDED  | polyform_a5 |
-| Obstacle - Large             | PolyForm A-7 black       | ADDED  | polyform_a7 |
-| Red Can buoy                 | Sur-Mark Can Buoy 950410 | ADDED  | surmark950410 |
-| Green Can buoy               | Sur-Mark Can Buoy 950400 | ADDED  | surmark950400 |
-| White Can buoy               | Sur-Mark Can Buoy 46104  | ADDED  | surmark46104 |
-| Green Totem                  | 46104 w/ Green Cover     | ADDED  | green_totem |
-| Yellow Totem                 | 46104 w/ Yellow Cover    | ADDED  | yellow_totem |
-| Blue Totem                   | 46104 w/ Blue Cover      | ADDED  | blue_totem |
-| Red Totem                    | 46104 w/ Red Cover       | ADDED  | red_totem |
-| Black Totem                  | 46104 w/ Black Cover     | ADDED  | black_totem |
-| Dock Material                | JetDock C000000008       | ADDED  | dock_block |
-| 2016 Dock                    | Custom Assembly          | ADDED  | robotx_dock_2016 |
-| 2018 Dock                    | Custom Assembly          | ADDED  | robotx_dock_2018 |
-| Blue Circle Symbol           | Custom                   | ADDED  | symbol_circle |
-| Blue Cruciform Symbol        | Custom                   | ADDED  | symbol_cross |
-| Blue Triangle Symbol         | Custom                   | ADDED  | symbol_triangle |
-| Green Circle Symbol          | Custom                   | ADDED  | symbol_circle |
-| Green Cruciform Symbol       | Custom                   | ADDED  | symbol_cross |
-| Green Triangle Symbol        | Custom                   | ADDED  | symbol_triangle |
-| Red Circle Symbol            | Custom                   | ADDED  | symbol_circle |
-| Red Cruciform Symbol         | Custom                   | ADDED  | symbol_cross |
-| Red Triangle Symbol          | Custom                   | ADDED  | symbol_triangle |
-| 2016 Pinger Transit (quals)  | Custom Group of objects  | ADDED  | robotx_2016_qualifying_pinger_transit |
-| 2016 Pinger Transit (finals) | Custom Group of objects  | ADDED  | robotx_2016_finals_pinger_transit |
-| 2018 Entrance/Exit Gate      | Custom Group of objects  | ADDED  | robotx_2018_entrance_gate |
-| White placard                | Custom                   | ADDED  | placard |
+ * The [VRX Wiki](https://bitbucket.org/osrf/vrx/wiki) provides documentation and tutorials.
+ * The instructions assume a basic familiarity with the ROS environment and Gazebo.  If these tools are new to you, we recommend starting with the excellent [ROS Tutorials](http://wiki.ros.org/ROS/Tutorials)
 
-*= More detailed model needed
+## Contributing
+
+The simulation tools under active development to support the RobotX teams.  We are starting simple with the important fundamental aspects of the robot and environment,
+but will rely on the community to develop additional functionality around their particular use cases.
+
+If you have any questions about these topics, or would like to work on other aspects, please contribute.  You can contact us directly (see below), submit an [issue](https://bitbucket.org/osrf/vrx/issues) or, better yet, submit a [pull request](https://bitbucket.org/osrf/vrx/pull-requests/)!
+
+## Contacts
+
+ * Carlos Aguero <caguero@osrfoundation.org>
+ * Brian Bingham <bbingham@nps.edu>
