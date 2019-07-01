@@ -1,0 +1,12 @@
+Source: ros-melodic-vrx-gazebo
+Section: misc
+Priority: extra
+Maintainer: Carlos Aguero <caguero@osrfoundation.org>
+Build-Depends: debhelper (>= 9.0.0), ros-melodic-catkin, ros-melodic-gazebo-dev, ros-melodic-gazebo-ros (>= 2.5.17), ros-melodic-geographic-msgs, ros-melodic-joy, ros-melodic-joy-teleop, ros-melodic-message-runtime, ros-melodic-std-msgs, ros-melodic-wamv-gazebo, ros-melodic-xacro
+Homepage: http://wiki.ros.org/vrx_gazebo
+Standards-Version: 3.9.2
+
+Package: ros-melodic-vrx-gazebo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-gazebo-dev, ros-melodic-gazebo-ros (>= 2.5.17), ros-melodic-geographic-msgs, ros-melodic-joy, ros-melodic-joy-teleop, ros-melodic-message-runtime, ros-melodic-std-msgs, ros-melodic-wamv-gazebo, ros-melodic-xacro
+Description: The ROS package for the RobotX competition running in Gazebo.
