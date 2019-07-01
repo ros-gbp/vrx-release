@@ -22,6 +22,10 @@
 #include "vrx_gazebo/scoring_plugin.hh"
 
 /////////////////////////////////////////////////
+ScoringPlugin::ScoringPlugin()
+    : WorldPlugin(), collisionNode(new gazebo::transport::Node()) {
+}
+
 void ScoringPlugin::Load(gazebo::physics::WorldPtr _world,
     sdf::ElementPtr _sdf)
 {
@@ -50,10 +54,24 @@ void ScoringPlugin::Load(gazebo::physics::WorldPtr _world,
 
   // Initialize ROS transport.
   this->rosNode.reset(new ros::NodeHandle());
-  this->taskPub = this->rosNode->advertise<vrx_gazebo::Task>(this->topic, 100);
+  this->taskPub = this->rosNode->advertise<vrx_gazebo::Task>
+    (this->taskInfoTopic, 100);
+  this->contactPub = this->rosNode->advertise<vrx_gazebo::Contact>
+    (this->contactDebugTopic, 100);
 
   this->updateConnection = gazebo::event::Events::ConnectWorldUpdateBegin(
     std::bind(&ScoringPlugin::Update, this));
+
+  collisionNode->Init();
+#if GAZEBO_MAJOR_VERSION >= 8
+  std::string worldName = this->world->Name();
+#else
+  std::string worldName = this->world->GetName();
+#endif
+  std::string collisionTopic =
+    std::string("/gazebo/") + worldName + std::string("/physics/contacts");
+  collisionSub = collisionNode->Subscribe(collisionTopic,
+                                          &ScoringPlugin::OnCollisionMsg, this);
 }
 
 //////////////////////////////////////////////////
@@ -107,8 +125,13 @@ void ScoringPlugin::Finish()
 void ScoringPlugin::Update()
 {
   // The vehicle might not be ready yet, let's try to get it.
-  if (!this->vehicleModel)
-    this->vehicleModel = this->world->ModelByName(this->vehicleName);
+  #if GAZEBO_MAJOR_VERSION >= 8
+    if (!this->vehicleModel)
+      this->vehicleModel = this->world->ModelByName(this->vehicleName);
+  #else
+    if (!this->vehicleModel)
+      this->vehicleModel = this->world->GetModel(this->vehicleName);
+  #endif
 
   this->UpdateTime();
   this->UpdateTaskState();
@@ -118,7 +141,11 @@ void ScoringPlugin::Update()
 //////////////////////////////////////////////////
 void ScoringPlugin::UpdateTime()
 {
-  this->currentTime = this->world->SimTime();
+  #if GAZEBO_MAJOR_VERSION >= 8
+    this->currentTime = this->world->SimTime();
+  #else
+    this->currentTime = this->world->GetSimTime();
+  #endif
 
   if (this->taskState == "running")
   {
@@ -202,21 +229,88 @@ void ScoringPlugin::ReleaseVehicle()
 //////////////////////////////////////////////////
 void ScoringPlugin::OnReady()
 {
+  gzmsg << "OnReady" << std::endl;
 }
 
 //////////////////////////////////////////////////
 void ScoringPlugin::OnRunning()
 {
+  gzmsg << "OnRunning" << std::endl;
 }
 
 //////////////////////////////////////////////////
 void ScoringPlugin::OnFinished()
 {
+  gzmsg << "OnFinished" << std::endl;
+}
+
+//////////////////////////////////////////////////
+void ScoringPlugin::OnCollision()
+{
+}
+
+//////////////////////////////////////////////////
+void ScoringPlugin::OnCollisionMsg(ConstContactsPtr &_contacts) {
+  // loop though collisions, if any include the wamv, increment collision
+  // counter
+  for (unsigned int i = 0; i < _contacts->contact_size(); ++i) {
+    std::string wamvCollisionStr1 = _contacts->contact(i).collision1();
+    std::string wamvCollisionStr2 = _contacts->contact(i).collision2();
+    std::string wamvCollisionSubStr1 =
+        wamvCollisionStr1.substr(0, wamvCollisionStr1.find("lump"));
+    std::string wamvCollisionSubStr2 =
+        wamvCollisionStr2.substr(0, wamvCollisionStr2.find("lump"));
+
+    bool isWamvHit =
+        wamvCollisionSubStr1 == "wamv::base_link::base_link_fixed_joint_" ||
+        wamvCollisionSubStr2 == "wamv::base_link::base_link_fixed_joint_";
+    bool isHitBufferPassed = this->currentTime - this->lastCollisionTime >
+                             gazebo::common::Time(CollisionBuffer, 0);
+
+    // publish a Contact MSG
+    if (isWamvHit && this->debug) {
+      this->contactMsg.header.stamp = ros::Time::now();
+      this->contactMsg.collision1 = _contacts->contact(i).collision1();
+      this->contactMsg.collision2 = _contacts->contact(i).collision2();
+      this->contactPub.publish(this->contactMsg);
+    }
+
+    if (isWamvHit && isHitBufferPassed) {
+      this->collisionCounter++;
+      gzmsg << "[" << this->collisionCounter
+            << "] New collision counted between ["
+            << _contacts->contact(i).collision1() << "] and ["
+            << _contacts->contact(i).collision2() << "]" << std::endl;
+      gzdbg << _contacts->contact(i).DebugString() << std::endl;
+#if GAZEBO_MAJOR_VERSION >= 8
+      this->lastCollisionTime = this->world->SimTime();
+#else
+      this->lastCollisionTime = this->world->GetSimTime();
+#endif
+      this->collisionList.push_back(
+          _contacts->contact(i).collision1() +
+          std::string(" || ") + _contacts->contact(i).collision2());
+      this->collisionTimestamps.push_back(this->currentTime);
+      this->OnCollision();
+      return;
+    }
+  }
 }
 
 //////////////////////////////////////////////////
 bool ScoringPlugin::ParseSDFParameters()
 {
+  if (char* env_dbg = std::getenv("VRX_DEBUG"))
+  {
+    gzdbg << std::string(env_dbg) <<std::endl;
+    if (std::string(env_dbg) == "false")
+      this->debug = false;
+  }
+  else
+  {
+    gzwarn << "VRX_DEBUG enviornment variable not set, defaulting to true"
+      << std::endl;
+  }
   // This is a required element.
   if (!this->sdf->HasElement("vehicle"))
   {
@@ -234,8 +328,13 @@ bool ScoringPlugin::ParseSDFParameters()
   this->taskName = this->sdf->Get<std::string>("task_name");
 
   // This is an optional element.
-  if (this->sdf->HasElement("topic"))
-    this->topic = this->sdf->Get<std::string>("topic");
+  if (this->sdf->HasElement("task_info_topic"))
+    this->taskInfoTopic = this->sdf->Get<std::string>("task_info_topic");
+
+  // This is an optional element.
+  if (this->sdf->HasElement("contact_debug_topic"))
+    this->contactDebugTopic = this->sdf->Get<std::string>
+      ("contact_debug_topic");
 
   // This is an optional element.
   if (this->sdf->HasElement("initial_state_duration"))
@@ -275,6 +374,12 @@ bool ScoringPlugin::ParseSDFParameters()
       return false;
     }
     this->runningStateDuration = value;
+  }
+
+  // This is an optional element.
+  if (this->sdf->HasElement("collision_buffer"))
+  {
+    this->CollisionBuffer = this->sdf->Get<float>("collision_buffer");
   }
 
   return this->ParseJoints();

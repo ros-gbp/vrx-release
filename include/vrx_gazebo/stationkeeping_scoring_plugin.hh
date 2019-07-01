@@ -66,9 +66,6 @@ class StationkeepingScoringPlugin : public ScoringPlugin
   // Documentation inherited.
   private: void OnRunning() override;
 
-  // Documentation inherited.
-  private: void OnFinished() override;
-
   /// \brief Publish the goal pose.
   private: void PublishGoal();
 
@@ -115,7 +112,7 @@ class StationkeepingScoringPlugin : public ScoringPlugin
   private: double poseError;
 
   /// \brief Number of instant pose error scores calculated so far .
-  private: double sampleCount;
+  private: unsigned int sampleCount = 0;
 
   /// \brief Sum of squared error scores calculated so far.
   private: double totalSquaredError;
