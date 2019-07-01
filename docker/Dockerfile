@@ -12,6 +12,7 @@ ARG GAZ=gazebo9
 RUN apt update \
  && apt install -y \
         build-essential \
+        cppcheck \
         curl \
         cmake \
         lsb-release \
@@ -28,8 +29,7 @@ RUN apt update \
         wget \
         libeigen3-dev \
         pkg-config \
-        libgles2-mesa-dev \
-        qtbase5-dev \
+        protobuf-compiler \
  && apt clean
 
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -41,14 +41,16 @@ RUN export DEBIAN_FRONTEND=noninteractive \
  && apt clean
 
 # Get ROS melodic and Gazebo 9.
-COPY keys/gazebo.key /tmp/gazebo.key
-COPY keys/ros.key /tmp/ros.key
+COPY docker/keys/gazebo.key /tmp/gazebo.key
+COPY docker/keys/ros.key /tmp/ros.key
 RUN /bin/sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' \
  && apt-key add /tmp/ros.key \
  && /bin/sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list' \
  && apt-key add /tmp/gazebo.key \
  && apt update \
  && apt install -y \
+    qtbase5-dev \
+    libgles2-mesa-dev \
     ${GAZ} \
     lib${GAZ}-dev \
     ros-${DIST}-ros-base \
@@ -59,10 +61,14 @@ RUN /bin/sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) 
     ros-${DIST}-joy \
     ros-${DIST}-joy-teleop \
     ros-${DIST}-key-teleop \
+    ros-${DIST}-robot-localization \
+    ros-${DIST}-robot-state-publisher \
+    ros-${DIST}-rviz \
     ros-${DIST}-teleop-tools \
     ros-${DIST}-teleop-twist-keyboard \
-    ros-${DIST}-robot-localization \
     ros-${DIST}-velodyne-simulator \
+    ros-${DIST}-rqt \
+    ros-${DIST}-rqt-common-plugins \
  && rosdep init \
  && apt clean
 
@@ -93,10 +99,12 @@ USER $USER:$GROUP
 # When running a container start in the developer's home folder.
 WORKDIR /home/$USER
 
-# Clone the VRX repository.
-RUN mkdir -p vrx_ws/src \
- && cd vrx_ws \
- && hg clone https://bitbucket.org/osrf/vrx src/vrx
+# Create workspace
+RUN mkdir -p vrx_ws/src/vrx
+
+# Copy the VRX repository from the local file system
+# We can't use the USER:GROUP variables until Docker adds support to --chown
+COPY --chown=developer:developer . vrx_ws/src/vrx/
 
 # Compile the VRX project.
 RUN /bin/bash -c ". /opt/ros/${DIST}/setup.bash && cd vrx_ws && catkin_make"

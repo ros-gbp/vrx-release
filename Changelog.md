@@ -1,6 +1,65 @@
 ## VRX 1
 
-### VRX 1.0.X
+### Forthcoming
+
+1. GUI overlay plugin (prototype):
+    * [Pull request 116](https://bitbucket.org/osrf/vrx/pull-requests/116)
+
+1. Randomized wind speed in the wind plugin:
+    * [Pull request 86](https://bitbucket.org/osrf/vrx/pull-requests/86)
+
+1. Fix issue with ocean reflecting the laser beams:
+    * [Pull request 79](https://bitbucket.org/osrf/vrx/pull-requests/79)
+
+1. Adding GPS antenna, collisions and inertia properties:
+    * [Pull request 90](https://bitbucket.org/osrf/vrx/pull-requests/90)
+
+1. Add sand island basic mesh and texture:
+    * [Pull request 89](https://bitbucket.org/osrf/vrx/pull-requests/89)
+
+1. Added ground station tents, tables and antenna:
+    * [Pull request 96](https://bitbucket.org/osrf/vrx/pull-requests/96)
+
+1. Add batteries to WAM-V:
+    * [Pull request 95](https://bitbucket.org/osrf/vrx/pull-requests/95)
+
+1. Add cpu cases to WAM-V:
+    * [Pull request 97](https://bitbucket.org/osrf/vrx/pull-requests/97)
+
+1. Add 3d lidar mesh to WAM-V:
+    * [Pull request 98](https://bitbucket.org/osrf/vrx/pull-requests/98)
+
+1. Support the ability to customize sensor location via YAML:
+    * [Pull request 99](https://bitbucket.org/osrf/vrx/pull-requests/99)
+
+1. Add camera mesh to WAM-V:
+    * [Pull request 101](https://bitbucket.org/osrf/vrx/pull-requests/101)
+
+1. Add varying lidar pole length:
+    * [Pull request 103](https://bitbucket.org/osrf/vrx/pull-requests/103)
+
+1. Support the ability to customize WAM-V thruster and sensor location via YAML:
+    * [Pull request 104](https://bitbucket.org/osrf/vrx/pull-requests/104)
+
+1. Add ability to playback simulations and add extra_gazebo_args argument to allow for recording:
+    * [Pull request 121](https://bitbucket.org/osrf/vrx/pull-requests/121)
+
+1. Improved buoyancy model:
+    * [Pull request 122](https://bitbucket.org/osrf/vrx/pull-requests/122)
+
+### VRX 1.0.1
+
+1. Refactor Docker layout:
+    * [Pull request 76](https://bitbucket.org/osrf/vrx/pull-requests/76)
+
+1. Convert WAM-V meshes to meters:
+    * [Pull request 75](https://bitbucket.org/osrf/vrx/pull-requests/75)
+    * [Pull request 74](https://bitbucket.org/osrf/vrx/pull-requests/74)
+
+### VRX 1.0.0
+
+1. Refactor Docker layout:
+    * [Pull request 73](https://bitbucket.org/osrf/vrx/pull-requests/73)
 
 1. Transition to Gazebo 9 and ROS Melodic.
     * [Pull request 70](https://bitbucket.org/osrf/vrx/pull-requests/70)
