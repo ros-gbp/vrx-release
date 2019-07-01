@@ -9,6 +9,7 @@
         <cylinder length="4" radius="0.2" />
       </geometry>
     </collision>
+
     <collision name="${prefix}_mid_float">
       <origin xyz="1.85 ${1.03*reflect} 0.3" rpy="${0*reflect} 1.38 0" />
       <geometry>
@@ -90,8 +91,16 @@
     </collision>
   </xacro:macro>
 
-  <!-- Basic model of the 16' WAM-V USV -->
   <link name="base_link">
+  </link>
+
+  <joint name="dummy_joint" type = "fixed">
+    <parent link="base_link"/>
+    <child link="dummy_link"/>
+  </joint>
+
+  <!-- Basic model of the 16' WAM-V USV -->
+  <link name="dummy_link">
     <visual>
       <geometry>
         <mesh filename="package://wamv_description/mesh/WAM-V-Base.dae"/>
