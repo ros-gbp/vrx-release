@@ -20,8 +20,8 @@
 
 #include <ros/ros.h>
 #include <std_msgs/ColorRGBA.h>
-#include <std_srvs/Trigger.h>
-
+#include <std_msgs/Empty.h>
+#include <dock_placard.pb.h>
 #include <array>
 #include <cstdint>
 #include <map>
@@ -31,6 +31,13 @@
 #include <vector>
 #include <gazebo/gazebo.hh>
 #include <sdf/sdf.hh>
+
+namespace gazebo
+{
+  typedef const boost::shared_ptr<
+    const dock_placard_msgs::msgs::DockPlacard>
+      ConstDockPlacardPtr;
+}
 
 /// \brief Controls the shape and color of a symbol.
 ///
@@ -45,7 +52,9 @@
 ///   <shuffle>: True if the topic for shuffling the sequence is enabled.
 ///   <robot_namespace> ROS namespace of Node, can be used to have multiple
 ///                    plugins.
-///   <topic>: The ROS topic used to request color changes.
+///   <ros_shuffle_topic>: The ROS topic used to request color changes.
+///   <gz_symbol_topic>: The gazebo topic subscribed to set symbol changes
+///     defaults to /<robot_namespace>/symbol
 ///   <visuals>: The set of visual symbols. It contains at least one visual:
 ///     <visual>: A visual displaying a shape.
 ///
@@ -66,6 +75,8 @@
 class PlacardPlugin : public gazebo::VisualPlugin
 {
   // Documentation inherited.
+  public: PlacardPlugin();
+
   public: void Load(gazebo::rendering::VisualPtr _parent,
                     sdf::ElementPtr _sdf);
 
@@ -80,6 +91,9 @@ class PlacardPlugin : public gazebo::VisualPlugin
                                                   const double _b,
                                                   const double _a);
 
+  /// \brief Initialize all color/symbol sequences.
+  private: void InitializeAllPatterns();
+
   /// \brief Parse all SDF parameters.
   /// \param[in] _sdf SDF elements.
   private: bool ParseSDF(sdf::ElementPtr _sdf);
@@ -87,19 +101,13 @@ class PlacardPlugin : public gazebo::VisualPlugin
   /// \brief Display the symbol in the placard
   private: void Update();
 
-  /// \brief Callback for change symbol service, calls other ChangeSymbol
-  /// internally.
-  /// \param[in] _req Not used.
-  /// \param[out] _res The Response containing a message with the new symbol.
-  /// \return True when the operation succeed or false otherwise.
-  private: bool ChangeSymbol(std_srvs::Trigger::Request &_req,
-                             std_srvs::Trigger::Response &_res);
+  /// \brief ROS callback for changing a symbol and its color.
+  /// \param[in] _msg Not used.
+  private: void ChangeSymbol(const std_msgs::Empty::ConstPtr &_msg);
 
-  /// \brief Choose a new random color.
-  private: void ShuffleColor();
-
-  /// \brief Choose a new random shape.
-  private: void ShuffleShape();
+  /// \brief Gazebo callback for changing light to a specific color pattern.
+  /// \param[in] _msg New symbol.
+  private: void ChangeSymbolTo(gazebo::ConstDockPlacardPtr &_msg);
 
   /// \brief List of the color options (red, green, blue, and no color)
   /// with their string name for logging.
@@ -115,6 +123,12 @@ class PlacardPlugin : public gazebo::VisualPlugin
   /// \brief The current shape.
   private: std::string shape;
 
+  /// \brief All color/symbol sequences.
+  private: std::vector<std::array<std::string, 2u>> allPatterns;
+
+  /// \brief The index pointing to one of the potential color/symbol sequence.
+  private: size_t allPatternsIdx = 0u;
+
   /// \brief Collection of visual names.
   private: std::vector<std::string> visualNames;
 
@@ -125,7 +139,7 @@ class PlacardPlugin : public gazebo::VisualPlugin
   private: bool shuffleEnabled = true;
 
   /// \brief Service to generate and display a new symbol.
-  private: ros::ServiceServer changeSymbolServer;
+  private: ros::Subscriber changeSymbolSub;
 
   /// \brief ROS Node handle.
   private: ros::NodeHandle nh;
@@ -134,7 +148,16 @@ class PlacardPlugin : public gazebo::VisualPlugin
   private: std::string ns;
 
   /// \brief ROS topic.
-  private: std::string topic;
+  private: std::string rosShuffleTopic;
+
+  /// \brief gazebo Node
+  private: gazebo::transport::NodePtr gzNode;
+
+  /// \brief gazebo symbol sub topic
+  private: std::string symbolSubTopic;
+
+  /// \breif symbol subscriber
+  private: gazebo::transport::SubscriberPtr symbolSub;
 
   /// Pointer to the scene node.
   private: gazebo::rendering::ScenePtr scene;
@@ -142,8 +165,8 @@ class PlacardPlugin : public gazebo::VisualPlugin
   /// \brief Connects to rendering update event.
   private: gazebo::event::ConnectionPtr updateConnection;
 
-  /// \brief Timer used to switch colors every second
-  private: gazebo::common::Timer timer;
+  /// \brief Next time where the plugin should be updated.
+  private: gazebo::common::Time nextUpdateTime;
 
   /// \brief Locks state and pattern member variables.
   private: std::mutex mutex;
