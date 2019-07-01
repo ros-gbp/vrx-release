@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <mutex>
-#include <ostream>
 #include <string>
 #include <vector>
 #include <gazebo/common/Assert.hh>
@@ -65,7 +64,7 @@ void ObjectChecker::NewTrial(const std::string &_objectName,
   this->trueName = _objectName;
   this->currObject = _object;
 
-  ROS_INFO_NAMED("ObjectChecker", "Intiating new trial");
+  ROS_INFO_NAMED("ObjectChecker", "Initiating new trial");
 }
 
 //////////////////////////////////////////////////
@@ -125,7 +124,12 @@ void ObjectChecker::OnObject(
 #endif
 
   // Get current pose of the current object
-  ignition::math::Pose3d truePose = this->currObject->WorldPose();
+  #if GAZEBO_MAJOR_VERSION >= 8
+    ignition::math::Pose3d truePose = this->currObject->WorldPose();
+  #else
+    ignition::math::Pose3d truePose = this->currObject->GetWorldPose().Ign();
+  #endif
+
   // 2D Error
   this->objectError = sqrt(pow(cartVec.X() - truePose.Pos().X(), 2)+
     pow(cartVec.Y() - truePose.Pos().Y(), 2));
@@ -331,8 +335,11 @@ void PerceptionScoringPlugin::Load(physics::WorldPtr _world,
 
   std::sort(this->dataPtr->initialObjects.begin(),
     this->dataPtr->initialObjects.end());
-
-  this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+  #if GAZEBO_MAJOR_VERSION >= 8
+    this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+  #else
+    this->dataPtr->lastUpdateTime = this->dataPtr->world->GetSimTime();
+  #endif
 
   // Optional: ROS namespace.
   std::string ns;
@@ -358,7 +365,12 @@ void PerceptionScoringPlugin::Load(physics::WorldPtr _world,
 /////////////////////////////////////////////////
 void PerceptionScoringPlugin::Restart()
 {
-  this->dataPtr->startTime = this->dataPtr->world->SimTime();
+  #if GAZEBO_MAJOR_VERSION >= 8
+    this->dataPtr->startTime = this->dataPtr->world->SimTime();
+  #else
+    this->dataPtr->startTime = this->dataPtr->world->GetSimTime();
+  #endif
+
   this->dataPtr->objects = this->dataPtr->initialObjects;
 
   // gzmsg << "Object population restarted" << std::endl;
@@ -392,15 +404,17 @@ void PerceptionScoringPlugin::OnUpdate()
     }
     else
     {
-      this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+      #if GAZEBO_MAJOR_VERSION >= 8
+        this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+      #else
+        this->dataPtr->lastUpdateTime = this->dataPtr->world->GetSimTime();
+      #endif
       return;
     }
   }
 
   // Check whether move the next object in the list.
-  auto elapsedTime = this->dataPtr->world->SimTime() -
-                     this->dataPtr->lastUpdateTime;
-  if (elapsedTime >= this->dataPtr->objects.front().time)
+  if (this->ElapsedTime() >= this->dataPtr->objects.front().time)
   {
     gzmsg << "PerceptionScoringPlugin: spawn next object." << std::endl;
     auto obj = this->dataPtr->objects.front();
@@ -408,8 +422,13 @@ void PerceptionScoringPlugin::OnUpdate()
     // Try to use a model/link frame if specified.
     if (!this->dataPtr->frameName.empty())
     {
-      this->dataPtr->frame =
-        this->dataPtr->world->EntityByName(this->dataPtr->frameName);
+      #if GAZEBO_MAJOR_VERSION >= 8
+        this->dataPtr->frame =
+          this->dataPtr->world->EntityByName(this->dataPtr->frameName);
+      #else
+        this->dataPtr->frame =
+          this->dataPtr->world->GetEntity(this->dataPtr->frameName);
+      #endif
       if (!this->dataPtr->frame)
       {
         gzthrow(std::string("The frame '") + this->dataPtr->frameName +
@@ -424,12 +443,20 @@ void PerceptionScoringPlugin::OnUpdate()
 
     if (this->dataPtr->frame)
     {
-      // Only use translation of frame pose
-      // This is a bit of a hack to deal with transients of spawning buoys with
-      // significant non-zero attitude.
-      ignition::math::Pose3d framePose(
-        this->dataPtr->frame->WorldPose().Pos(),
-        ignition::math::Quaterniond());
+      // Set object pose relative to the specified frame (e.g., the wam-v)
+      // Pitch and roll are set to zero as a hack to deal with
+      // transients associated with spawning buoys with significant attitude.
+      #if GAZEBO_MAJOR_VERSION >= 8
+        ignition::math::Pose3d framePose(
+          this->dataPtr->frame->WorldPose().Pos(),
+          ignition::math::Quaterniond(0.0, 0.0,
+            this->dataPtr->frame->WorldPose().Rot().Yaw()));
+      #else
+        ignition::math::Pose3d framePose(
+          this->dataPtr->frame->GetWorldPose().pos.Ign(),
+          ignition::math::Quaterniond(0.0, 0.0,
+            this->dataPtr->frame->GetWorldPose().rot.Ign().Yaw()));
+      #endif
       ignition::math::Matrix4d transMat(framePose);
       ignition::math::Matrix4d pose_local(obj.pose);
       obj.pose = (transMat * pose_local).Pose();
@@ -441,7 +468,7 @@ void PerceptionScoringPlugin::OnUpdate()
     if (this->dataPtr->objectCounter.find(obj.type) ==
         this->dataPtr->objectCounter.end())
     {
-	  this->dataPtr->objectCounter[obj.type] = 0;
+    this->dataPtr->objectCounter[obj.type] = 0;
     }
     else
     {
@@ -456,7 +483,11 @@ void PerceptionScoringPlugin::OnUpdate()
     }
     // Get a unique name for the new object.
     modelName += "_" + std::to_string(index);
-    auto modelPtr = this->dataPtr->world->EntityByName(modelName);
+    #if GAZEBO_MAJOR_VERSION >= 8
+      auto modelPtr = this->dataPtr->world->EntityByName(modelName);
+    #else
+      auto modelPtr = this->dataPtr->world->GetEntity(modelName);
+    #endif
     if (modelPtr)
     {
       // Setup new trial in object checker
@@ -464,8 +495,11 @@ void PerceptionScoringPlugin::OnUpdate()
 
       // Save current object and original pose for later
       this->dataPtr->curr_model = modelPtr;
-      this->dataPtr->orig_pose = modelPtr->WorldPose();
-
+      #if GAZEBO_MAJOR_VERSION >= 8
+        this->dataPtr->orig_pose = modelPtr->WorldPose();
+      #else
+        this->dataPtr->orig_pose = modelPtr->GetWorldPose().Ign();
+      #endif
       // Move object to the target pose.
       modelPtr->SetWorldPose(obj.pose);
       modelPtr->SetWorldTwist(ignition::math::Vector3d::Zero,
@@ -477,12 +511,18 @@ void PerceptionScoringPlugin::OnUpdate()
       gzerr << "Object [" << modelName << "] NOT spawned" << std::endl;
     }
     this->dataPtr->objects.erase(this->dataPtr->objects.begin());
-    this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+    #if GAZEBO_MAJOR_VERSION >= 8
+      this->dataPtr->lastUpdateTime = this->dataPtr->world->SimTime();
+    #else
+      this->dataPtr->lastUpdateTime = this->dataPtr->world->GetSimTime();
+    #endif
   }
 }
 
 //////////////////////////////////////////////////
 void PerceptionScoringPlugin::OnRunning()
 {
+  gzmsg << "OnRunning" << std::endl;
+
   this->dataPtr->objectChecker->Enable();
 }

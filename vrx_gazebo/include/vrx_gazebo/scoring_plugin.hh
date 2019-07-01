@@ -27,7 +27,9 @@
 #include <gazebo/common/Time.hh>
 #include <gazebo/physics/World.hh>
 #include <sdf/sdf.hh>
+#include <gazebo/transport/transport.hh>
 #include "vrx_gazebo/Task.h"
+#include "vrx_gazebo/Contact.h"
 
 /// \brief A plugin that provides common functionality to any scoring plugin.
 /// This plugin defines four different task states:
@@ -59,8 +61,14 @@
 ///
 /// <task_name>: Required parameter specifying the task name (string type).
 ///
-/// <topic>: Optional parameter (string type) containing the ROS topic name to
-/// publish the task stats. The default topic name is /vrx/task/info .
+/// <task_info_topic>: Optional parameter (string type)
+/// containing the ROS topic name to publish the task stats. The default
+/// topic name is /vrx/task/info .
+///
+/// <contact_debug_topic>: Optional parameter (string type)
+/// containing the ROS topic name to
+/// publish every instant a collision with the wamv is happening.
+/// Default is /vrx/debug/contact.
 ///
 /// <initial_state_duration>: Optional parameter (double type) specifying the
 /// amount of seconds that the plugin will be in the "initial" state.
@@ -71,6 +79,10 @@
 /// <running_state_duration>: Optional parameter (double type) specifying the
 /// amount of maximum seconds that the plugin will be in the "running" state.
 /// Note that this parameter specifies the maximum task time.
+///
+/// <collision_buffer>: Optional parameter (double type) specifying the
+/// minimum amount of seconds between two collisions. If N collisions happen
+/// within this time frame, only one will be counted.
 ///
 /// <release_joints>: Optional element specifying the collection of joints that
 /// should be dettached when transitioning to the "ready" state.
@@ -96,10 +108,11 @@
 ///     </joint>
 ///   </release_joints>
 /// </plugin>
+
 class ScoringPlugin : public gazebo::WorldPlugin
 {
   /// \brief Class constructor.
-  public: ScoringPlugin() = default;
+  public: ScoringPlugin();
 
   // Documentation inherited.
   protected: void Load(gazebo::physics::WorldPtr _world,
@@ -160,6 +173,13 @@ class ScoringPlugin : public gazebo::WorldPlugin
   /// \brief Callback executed when the task state transition into "finished".
   private: virtual void OnFinished();
 
+  /// \brief Callback executed when a collision is detected for the WAMV.
+  private: virtual void OnCollision();
+
+  /// \brief Callback function when collision occurs in the world.
+  /// \param[in] _contacts List of all collisions from last simulation iteration
+  private: void OnCollisionMsg(ConstContactsPtr &_contacts);
+
   /// \brief Parse all SDF parameters.
   /// \return True when all parameters were successfully parsed or false
   /// otherwise.
@@ -182,11 +202,26 @@ class ScoringPlugin : public gazebo::WorldPlugin
   /// \brief Pointer to the vehicle to score.
   protected: gazebo::physics::ModelPtr vehicleModel;
 
+  /// \brief Last collision time.
+  protected: gazebo::common::Time lastCollisionTime;
+
+  /// \brief gazebo node pointer
+  private: gazebo::transport::NodePtr collisionNode;
+
+  /// \brief Collision detection node subscriber
+  private: gazebo::transport::SubscriberPtr collisionSub;
+
   /// \brief Pointer to the update event connection.
   private: gazebo::event::ConnectionPtr updateConnection;
 
   /// \brief Topic where the task stats are published.
-  private: std::string topic = "/vrx/task/info";
+  private: std::string taskInfoTopic = "/vrx/task/info";
+
+  /// \brief Bool flag for debug.
+  private: bool debug = true;
+
+  /// \brief Topic where debug collision is published.
+  private: std::string contactDebugTopic = "/vrx/debug/contact";
 
   /// \brief The score.
   private: double score = 0.0;
@@ -221,6 +256,18 @@ class ScoringPlugin : public gazebo::WorldPlugin
   /// \brief Remaining time since the start of the task (running state).
   private: gazebo::common::Time remainingTime;
 
+  /// \brief Collision buffer.
+  private: float CollisionBuffer = 3.0;
+
+  /// \brief Collisions counter.
+  private: int collisionCounter = 0;
+
+  /// \brief Collision list.
+  private: std::vector<std::string> collisionList;
+
+  /// \brief Collisions timestamps.
+  private: std::vector<gazebo::common::Time> collisionTimestamps;
+
   /// \brief Whether the current task has timed out or not.
   private: bool timedOut = false;
 
@@ -233,6 +280,9 @@ class ScoringPlugin : public gazebo::WorldPlugin
   /// \brief The next task message to be published.
   private: vrx_gazebo::Task taskMsg;
 
+  /// \brief ROS Contact Msg.
+  private: vrx_gazebo::Contact contactMsg;
+
   /// \brief The name of the joints to be dettached during ReleaseVehicle().
   private: std::vector<std::string> lockJointNames;
 
@@ -241,6 +291,9 @@ class ScoringPlugin : public gazebo::WorldPlugin
 
   /// \brief Publisher for the task state.
   private: ros::Publisher taskPub;
+
+  /// \brief Publisher for the collision.
+  private: ros::Publisher contactPub;
 };
 
 #endif
