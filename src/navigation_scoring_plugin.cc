@@ -15,15 +15,16 @@
  *
 */
 
+#include "vrx_gazebo/navigation_scoring_plugin.hh"
 #include <cmath>
 #include <gazebo/common/Assert.hh>
 #include <gazebo/common/Console.hh>
-#include "vrx_gazebo/navigation_scoring_plugin.hh"
+#include <gazebo/physics/Link.hh>
 
 /////////////////////////////////////////////////
 NavigationScoringPlugin::Gate::Gate(
-    const gazebo::physics::ModelPtr _leftMarkerModel,
-    const gazebo::physics::ModelPtr _rightMarkerModel)
+    const gazebo::physics::LinkPtr _leftMarkerModel,
+    const gazebo::physics::LinkPtr _rightMarkerModel)
   : leftMarkerModel(_leftMarkerModel),
     rightMarkerModel(_rightMarkerModel)
 {
@@ -37,8 +38,13 @@ void NavigationScoringPlugin::Gate::Update()
     return;
 
   // The pose of the markers delimiting the gate.
-  const auto leftMarkerPose = this->leftMarkerModel->WorldPose();
-  const auto rightMarkerPose = this->rightMarkerModel->WorldPose();
+  #if GAZEBO_MAJOR_VERSION >= 8
+    const auto leftMarkerPose = this->leftMarkerModel->WorldPose();
+    const auto rightMarkerPose = this->rightMarkerModel->WorldPose();
+  #else
+    const auto leftMarkerPose = this->leftMarkerModel->GetWorldPose().Ign();
+    const auto rightMarkerPose = this->rightMarkerModel->GetWorldPose().Ign();
+  #endif
 
   // Unit vector from the left marker to the right one.
   auto v1 = leftMarkerPose.Pos() - rightMarkerPose.Pos();
@@ -93,6 +99,29 @@ void NavigationScoringPlugin::Load(gazebo::physics::WorldPtr _world,
     sdf::ElementPtr _sdf)
 {
   ScoringPlugin::Load(_world, _sdf);
+
+  // This is a required element.
+  if (!_sdf->HasElement("course_name"))
+  {
+    gzerr << "Unable to find <course_name> element in SDF." << std::endl;
+    return;
+  }
+  #if GAZEBO_MAJOR_VERSION >= 8
+    this->course =
+      this->world->ModelByName(_sdf->Get<std::string>("course_name"));
+  #else
+    this->course =
+      this->world->GetModel(_sdf->Get<std::string>("course_name"));
+  #endif
+  if (!this->course)
+  {
+    gzerr << "could not find " <<
+      _sdf->Get<std::string>("course_name") << std::endl;
+  }
+
+  // Optional.
+  if (_sdf->HasElement("obstacle_penalty"))
+    this->obstaclePenalty = _sdf->Get<double>("obstacle_penalty");
 
   // This is a required element.
   if (!_sdf->HasElement("gates"))
@@ -166,8 +195,9 @@ bool NavigationScoringPlugin::ParseGates(sdf::ElementPtr _sdf)
 bool NavigationScoringPlugin::AddGate(const std::string &_leftMarkerName,
     const std::string &_rightMarkerName)
 {
-  gazebo::physics::ModelPtr leftMarkerModel =
-    this->world->ModelByName(_leftMarkerName);
+    gazebo::physics::LinkPtr leftMarkerModel =
+      this->course->GetLink(this->course->GetName() + "::" +
+        _leftMarkerName + "::link");
 
   // Sanity check: Make sure that the model exists.
   if (!leftMarkerModel)
@@ -176,8 +206,9 @@ bool NavigationScoringPlugin::AddGate(const std::string &_leftMarkerName,
     return false;
   }
 
-  gazebo::physics::ModelPtr rightMarkerModel =
-    this->world->ModelByName(_rightMarkerName);
+    gazebo::physics::LinkPtr rightMarkerModel =
+      this->course->GetLink(this->course->GetName() + "::" +
+        _rightMarkerName + "::link");
 
   // Sanity check: Make sure that the model exists.
   if (!rightMarkerModel)
@@ -198,19 +229,33 @@ void NavigationScoringPlugin::Update()
   // The vehicle might not be ready yet, let's try to get it.
   if (!this->vehicleModel)
   {
-    this->vehicleModel = this->world->ModelByName(this->vehicleName);
+    #if GAZEBO_MAJOR_VERSION >= 8
+      this->vehicleModel = this->world->ModelByName(this->vehicleName);
+    #else
+      this->vehicleModel = this->world->GetModel(this->vehicleName);
+    #endif
     if (!this->vehicleModel)
       return;
   }
 
-  const auto robotPose = this->vehicleModel->WorldPose();
+  // Skip if we're not in running mode.
+  if (this->TaskState() != "running")
+    return;
+
+  this->ScoringPlugin::SetScore(std::max(0.0, this->RemainingTime().Double() -
+    this->numCollisions * this->obstaclePenalty));
+
+  #if GAZEBO_MAJOR_VERSION >= 8
+    const auto robotPose = this->vehicleModel->WorldPose();
+  #else
+    const auto robotPose = this->vehicleModel->GetWorldPose().Ign();
+  #endif
 
   // Update the state of all gates.
-  for (auto &gate : this->gates)
+  auto iter = std::begin(this->gates);
+  while (iter != std::end(this->gates))
   {
-    // Ignore all gates that have been crossed or are invalid.
-    if (gate.state == GateState::CROSSED || gate.state == GateState::INVALID)
-      continue;
+    Gate &gate = *iter;
 
     // Update this gate (in case it moved).
     gate.Update();
@@ -222,6 +267,16 @@ void NavigationScoringPlugin::Update()
     {
       currentState = GateState::CROSSED;
       gzmsg << "New gate crossed!" << std::endl;
+
+      // We need to cross all gates in order.
+      if (iter != this->gates.begin())
+      {
+        gzmsg << "Gate crossed in the wrong order" << std::endl;
+        this->Fail();
+        return;
+      }
+
+      iter = this->gates.erase(iter);
     }
     // Just checking: did we go backward through the gate?
     else if (currentState == GateState::VEHICLE_BEFORE &&
@@ -230,29 +285,37 @@ void NavigationScoringPlugin::Update()
       currentState = GateState::INVALID;
       gzmsg << "Transited the gate in the wrong direction. Gate invalidated!"
             << std::endl;
+      this->Fail();
+      return;
     }
+    else
+      ++iter;
 
     gate.state = currentState;
+  }
+
+  // Course completed!
+  if (this->gates.empty())
+  {
+    gzmsg << "Course completed!" << std::endl;
+    this->Finish();
   }
 }
 
 //////////////////////////////////////////////////
-void NavigationScoringPlugin::OnReady()
+void NavigationScoringPlugin::Fail()
 {
-  gzmsg << "OnReady" << std::endl;
+  this->SetScore(0.0);
+  this->Finish();
 }
 
 //////////////////////////////////////////////////
-void NavigationScoringPlugin::OnRunning()
+void NavigationScoringPlugin::OnCollision()
 {
-  gzmsg << "OnRunning" << std::endl;
+  this->numCollisions++;
 }
 
-//////////////////////////////////////////////////
-void NavigationScoringPlugin::OnFinished()
-{
-  gzmsg << "OnFinished" << std::endl;
-}
+
 
 // Register plugin with gazebo
 GZ_REGISTER_WORLD_PLUGIN(NavigationScoringPlugin)
