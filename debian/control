@@ -1,0 +1,12 @@
+Source: ros-kinetic-wamv-gazebo
+Section: misc
+Priority: optional
+Maintainer: Carlos Aguero <caguero@osrfoundation.org>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-gazebo-plugins, ros-kinetic-hector-gazebo-plugins, ros-kinetic-robot-localization, ros-kinetic-usv-gazebo-plugins, ros-kinetic-velodyne-gazebo-plugins, ros-kinetic-wamv-description, ros-kinetic-xacro
+Homepage: http://wiki.ros.org/wamv_gazebo
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-wamv-gazebo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-gazebo-plugins, ros-kinetic-hector-gazebo-plugins, ros-kinetic-robot-localization, ros-kinetic-usv-gazebo-plugins, ros-kinetic-velodyne-gazebo-plugins, ros-kinetic-wamv-description, ros-kinetic-xacro
+Description: Provides templates and examples for integrating the WAM-V model into gazebo with dynamics, sensors, etc.
