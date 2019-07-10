@@ -1,0 +1,12 @@
+Source: ros-kinetic-usv-gazebo-plugins
+Section: misc
+Priority: extra
+Maintainer: Carlos Aguero <caguero@osrfoundation.org>
+Build-Depends: debhelper (>= 9.0.0), libeigen3-dev, ros-kinetic-catkin, ros-kinetic-gazebo-dev, ros-kinetic-gazebo-ros (>= 2.5.17), ros-kinetic-roscpp, ros-kinetic-std-msgs, ros-kinetic-wave-gazebo-plugins, ros-kinetic-xacro
+Homepage: http://wiki.ros.org/usv_gazebo_plugins
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-usv-gazebo-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libeigen3-dev, ros-kinetic-gazebo-dev, ros-kinetic-gazebo-ros (>= 2.5.17), ros-kinetic-message-runtime, ros-kinetic-roscpp, ros-kinetic-std-msgs, ros-kinetic-wave-gazebo-plugins, ros-kinetic-xacro
+Description: Gazebo plugins for simulating Unmanned Surface Vehicles Originaly copied from https://github.com/bsb808/usv_gazebo_plugins
