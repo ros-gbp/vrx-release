@@ -1,3 +1,32 @@
+## vrx (kinetic) - 1.1.2-1
+
+The packages in the `vrx` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release --rosdistro kinetic --track kinetic vrx` on `Wed, 10 Jul 2019 00:02:40 -0000`
+
+These packages were released:
+- `usv_gazebo_plugins`
+- `vrx_gazebo`
+- `wamv_description`
+- `wamv_gazebo`
+- `wave_gazebo`
+- `wave_gazebo_plugins`
+
+Version of package(s) in repository `vrx`:
+
+- upstream repository: https://bitbucket.org/osrf/vrx
+- release repository: https://github.com/ros-gbp/vrx-release.git
+- rosdistro version: `1.1.1-1`
+- old version: `1.1.1-1`
+- new version: `1.1.2-1`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.12`
+- rosdep version: `0.15.2`
+- rosdistro version: `0.7.4`
+- vcstools version: `0.1.40`
+
+
 ## vrx (kinetic) - 1.1.1-1
 
 The packages in the `vrx` repository were released into the `kinetic` distro by running `/home/steven/osrf/bloom/myscripts/py3env/bin/bloom-release vrx -r kinetic --override-release-repository-push-url git@github.com:ros-gbp/vrx-release` on `Wed, 03 Jul 2019 22:03:30 -0000`
