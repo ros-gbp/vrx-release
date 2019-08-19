@@ -23,7 +23,7 @@
     <gui>
       <plugin name="keyboard_gui_plugin" filename="libKeyboardGUIPlugin.so"/>
       <camera name='user_camera'>
-        <pose frame=''>73.3604 -0.353679 10.7644 0 0.271643 3.09219</pose>
+        <pose frame=''>-12 0  5 0 0.27 0</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -53,6 +53,56 @@
     <include>
       <uri>model://ocean_waves</uri>
     </include>
+
+    <!-- Models  -->
+    <model name="dock_block">
+      <pose>10 -10 0.25 0 0 0 </pose>
+      <include>
+        <uri>model://dock_block</uri>
+      </include>
+    </model>
+			 
+    <model name="dock_block_2x2">
+      <pose>10 -5 0.25 0 0 0 </pose>
+      <include>
+        <uri>model://dock_block_2x2</uri>
+      </include>
+    </model>
+
+    <model name="dock_block_3x3">
+      <pose>10 0 0.25 0 0 0 </pose>
+      <include>
+        <uri>model://dock_block_3x3</uri>
+      </include>
+    </model>
+
+    <model name="dock_block_4x4">
+      <pose>10 5 0.25 0 0 0 </pose>
+      <include>
+        <uri>model://dock_block_4x4</uri>
+      </include>
+    </model>
+
+    <!-- The 2016 dock with the three placards -->
+    
+    <include>
+      <uri>model://dock_2016</uri>
+      <pose>20 -15 0.25 0 0 0</pose>
+    </include>
+    
+
+    <!-- The 2018 dock with the two placards -->
+    
+    <include>
+      <uri>model://dock_2018</uri>
+      <pose>20 15 0.25 0 0 0</pose>
+    </include>
+
+    <include>
+      <uri>model://robotx_light_buoy</uri>
+      <pose>10 10 0.25 0 0 0</pose>
+    </include>
+    
 
   </world>
 </sdf>
