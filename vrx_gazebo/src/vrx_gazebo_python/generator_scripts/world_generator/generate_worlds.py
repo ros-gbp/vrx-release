@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import yaml
+import oyaml as yaml
 import rospy
 import os
 from collections import OrderedDict
@@ -9,29 +9,33 @@ from .. utils import create_xacro_file
 
 def main():
     s = open(rospy.get_param('requested'))
+    yaml_name = rospy.get_param('requested')[
+        rospy.get_param('requested').rfind('/')+1:
+        rospy.get_param('requested').rfind('.yaml')]
     # get the yaml as a dict
-    master = yaml.load(s)
+    master = yaml.safe_load(s)
     # get lsit of all coordinates that the master dict maps out
     coordinates = linear_combinations(master)
     # create a world xacro and subsiquent world file for each coordinate
     for num, i in enumerate(coordinates):
         create_xacro_file(xacro_target=rospy.get_param('world_xacro_target') +
-                          'world' + str(num) + '.world.xacro',
+                          yaml_name + str(num) + '.world.xacro',
 
                           requested_macros=world_gen(coordinate=i,
                                                      master=master),
                           boiler_plate_top='<?xml version="1.0" ?>\n' +
                           '<sdf version="1.6" ' +
                           'xmlns:xacro="http://ros.org/wiki/xacro">\n' +
+                          '<!-- COORDINATE: ' + str(i) + ' -->\n' +
                           '<world name="robotx_example_course">\n' +
                           '  <xacro:include filename="$(find vrx_gazebo)' +
                           '/worlds/xacros/include_all_xacros.xacro" />\n' +
                           '  <xacro:include_all_xacros />\n',
                           boiler_plate_bot='</world>\n</sdf>')
         os.system('rosrun xacro xacro --inorder -o' +
-                  rospy.get_param('world_target') + 'world' + str(num) +
+                  rospy.get_param('world_target') + yaml_name + str(num) +
                   '.world ' +
-                  rospy.get_param('world_xacro_target') + 'world' +
+                  rospy.get_param('world_xacro_target') + yaml_name +
                   str(num) + '.world.xacro')
     print 'All ', len(coordinates), ' worlds generated'
 
