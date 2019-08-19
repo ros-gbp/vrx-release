@@ -22,7 +22,6 @@ along with this package.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <std_msgs/Float64.h>
 #include <functional>
-#include <string>
 #include <gazebo/common/Console.hh>
 #include "usv_gazebo_plugins/usv_gazebo_wind_plugin.hh"
 
@@ -138,29 +137,28 @@ void UsvWindPlugin::Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf)
 
   gzmsg << "update rate  = " << this->updateRate << std::endl;
 
-  // setting seed for ignition::math::Rand
+  // Setting the  seed for the random generator.
+  unsigned int seed = std::random_device {}();
   if (_sdf->HasElement("random_seed") &&
-    _sdf->GetElement("random_seed")->Get<int>() != 0)
+    _sdf->GetElement("random_seed")->Get<unsigned int>() != 0)
   {
-    ignition::math::Rand::Seed(
-      _sdf->GetElement("random_seed")->Get<int>());
-  }
-  else
-  {
-    common::Time currentWallTime;
-    currentWallTime.SetToWallTime();
-    ignition::math::Rand::Seed(currentWallTime.sec);
+    seed = _sdf->GetElement("random_seed")->Get<unsigned int>();
   }
 
-  gzmsg << "Random seed value = " << this->timeConstant << std::endl;
+  gzmsg << "Random seed value = " << seed << std::endl;
+  this->randGenerator.reset(new std::mt19937(seed));
 
-  // initialize previous time and previous velocity
+  // Calculate filter constant
+  this->filterGain = this->gainConstant*sqrt(2.0*this->timeConstant);
+  gzmsg << "Var wind filter gain = " << this->filterGain << std::endl;
+
+  // Initialize previous time and previous velocity
 #if GAZEBO_MAJOR_VERSION >= 8
   this->previousTime = this->world->SimTime().Double();
 #else
   this->previousTime = this->world->GetSimTime().Double();
 #endif
-  this->previousVarVel = 0;
+  this->varVel = 0;
 
   // Initialize ROS transport.
   this->rosNode.reset(new ros::NodeHandle());
@@ -215,12 +213,14 @@ void UsvWindPlugin::Update()
   double currentTime = this->world->GetSimTime().Double();
 #endif
   double dT= currentTime - this->previousTime;
-  double randomDist = ignition::math::Rand::DblNormal(0, 1);
-  // calculate current variable wind velocity
-  double currentVarVel = this->previousVarVel + (-1/this->timeConstant*
-    (this->previousVarVel+this->gainConstant*randomDist))*dT;
-  // calculate current wind velocity
-  double velocity = currentVarVel + this->windMeanVelocity;
+  std::normal_distribution<double> dist(0, 1);
+  double randomDist = dist(*this->randGenerator);
+
+  // Current variable wind velocity
+  this->varVel += 1.0/this->timeConstant*
+    (-1.0*this->varVel+this->filterGain/sqrt(dT)*randomDist)*dT;
+  // Current wind velocity
+  double velocity = this->varVel + this->windMeanVelocity;
 
   for (auto& windObj : this->windObjs)
   {
@@ -263,8 +263,7 @@ void UsvWindPlugin::Update()
     windObj.link->AddRelativeTorque(
       ignition::math::Vector3d(0.0, 0.0, windForce.Z()));
   }
-  // Moving the previous time and velocity one step forward.
-  this->previousVarVel = currentVarVel;
+  // Moving the previous time one step forward.
   this->previousTime = currentTime;
 
   double publishingBuffer = 1/this->updateRate;
