@@ -20,14 +20,15 @@
 
 #include <ros/ros.h>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 #include <gazebo/common/CommonTypes.hh>
 #include <gazebo/common/Plugin.hh>
-#include <gazebo/physics/physics.hh>
 #include <ignition/math/Vector3.hh>
+#include <gazebo/physics/physics.hh>
+
 #include <sdf/sdf.hh>
-#include <ignition/math/Rand.hh>
 
 namespace gazebo
 {
@@ -108,8 +109,11 @@ namespace gazebo
     /// \brief Average wind velocity.
     private: double windMeanVelocity;
 
-    /// \brief Gain constant.
+    /// \brief User specified gain constant.
     private: double gainConstant;
+
+    /// \brief Calculated filter gain constant.
+    private: double filterGain;
 
     /// \brief Time constant.
     private: double timeConstant;
@@ -117,8 +121,8 @@ namespace gazebo
     /// \brief Previous time.
     private: double previousTime;
 
-    /// \brief Velocity at previous time.
-    private: double previousVarVel;
+    /// \brief Variable velocity component.
+    private: double varVel;
 
     /// \brief ROS node handle.
     private: std::unique_ptr<ros::NodeHandle> rosNode;
@@ -146,6 +150,9 @@ namespace gazebo
 
     /// \breif Bool debug set by environment var VRX_DEBUG
     private: bool debug = true;
+
+    /// \def Random generator.
+    private: std::unique_ptr<std::mt19937> randGenerator;
   };
 }
 
