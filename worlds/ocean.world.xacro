@@ -16,14 +16,14 @@
    limitations under the License.
 
 -->
-<sdf version="1.6">
+<sdf version="1.6" xmlns:xacro="http://ros.org/wiki/xacro">
   <world name="ocean_world">
 
     <!-- GUI -->
     <gui>
       <plugin name="keyboard_gui_plugin" filename="libKeyboardGUIPlugin.so"/>
       <camera name='user_camera'>
-        <pose frame=''>-12 0  5 0 0.27 0</pose>
+        <pose frame=''>73.3604 -0.353679 10.7644 0 0.271643 3.09219</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -49,40 +49,9 @@
       <uri>model://sun</uri>
     </include>
 
-    <!-- World models  -->
-    <include>
-      <uri>model://ocean_waves</uri>
-    </include>
+    <!--Waves-->
+    <xacro:include filename="$(find wave_gazebo)/world_models/ocean_waves/model.xacro"/>
+    <xacro:ocean_waves/>
 
-    <!-- Models  -->
-		<!--
-    <model name="a3_buoy">
-      <pose>0 1 4 0 0 0 </pose>
-      <include>
-				<uri>model://polyform_a3</uri>
-      </include>
-			</model>
-			    <model name="surmark46104">
-      <include>
-				<uri>model://surmark46104</uri>
-				<pose>0 -1 4 0 0 0 </pose>
-      </include>
-    </model>
-  
-		
-    <model name="wavegauge">
-      <pose>0 0 0 0 0 0 </pose>
-      <include>
-				<uri>model://wavegauge</uri>
-      </include>
-    </model>
-        -->
-    <!-- Add auto generated model with N buoys -->
-    <model name="robotx_2018_qualifying_avoid_obstacles_buoys">
-      <include>
-        <uri>model://robotx_2018_qualifying_avoid_obstacles_buoys</uri>
-      </include>
-    </model>
-	
   </world>
 </sdf>
