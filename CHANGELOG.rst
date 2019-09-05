@@ -2,6 +2,12 @@
 Changelog for package wamv_description
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.1 (2019-09-05)
+------------------
+* Merge
+* merged with master
+* Contributors: Rumman Waqar <rumman.waqar05@gmail.com>, Tyler Lum <tylergwlum@gmail.com>
+
 1.2.0 (2019-08-19)
 ------------------
 * Merge from topic_namespace_generation
