@@ -1,0 +1,12 @@
+Source: ros-kinetic-wamv-description
+Section: misc
+Priority: extra
+Maintainer: Carlos Aguero <caguero@osrfoundation.org>
+Build-Depends: debhelper (>= 9.0.0), ros-kinetic-catkin, ros-kinetic-xacro
+Homepage: http://wiki.ros.org/wamv_description
+Standards-Version: 3.9.2
+
+Package: ros-kinetic-wamv-description
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-kinetic-xacro
+Description: This package provides a URDF model of WAM-V
