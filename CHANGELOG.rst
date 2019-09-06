@@ -2,6 +2,9 @@
 Changelog for package wamv_gazebo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.2 (2019-09-06)
+------------------
+
 1.2.1 (2019-09-05)
 ------------------
 * minor cleanup + env flag + disable z
