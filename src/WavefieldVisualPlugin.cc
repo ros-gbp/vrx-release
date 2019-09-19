@@ -27,6 +27,8 @@
 #include <gazebo/rendering/RenderTypes.hh>
 #include <gazebo/rendering/Scene.hh>
 #include <gazebo/rendering/Visual.hh>
+#include <gazebo/sensors/Sensor.hh>
+#include <gazebo/sensors/SensorManager.hh>
 #include <gazebo/transport/transport.hh>
 #include <gazebo/transport/Node.hh>
 
@@ -181,35 +183,35 @@ namespace asv
     public: std::shared_ptr<WaveParameters> waveParams;
 
     /// \brief Do not update visual if 'true', [false].
-    public: bool isStatic;
+    public: bool isStatic = false;
 
     /// \brief Enable rtts for reflection refraction, [true].
-    public: bool enableRtt;
+    public: bool enableRtt = true;
 
     /// \brief Ratio between shallow water color and refraction color to use
     ///        In [0, 1], where 0 is no refraction and 1 is maximum refraction
-    public: double refractOpacity;
+    public: double refractOpacity = 0;
 
     /// \brief Ratio between environment color and reflection color to use
     ///        In [0, 1], where 0 is no reflection and 1 is maximum reflection
-    public: double reflectOpacity;
+    public: double reflectOpacity = 0;
 
     /// \brief Noise scale in rtt. Create distortion in reflection/refraction
-    public: double rttNoise;
+    public: double rttNoise = 0;
 
     /// \brief World stats.
-    public: double simTime;
+    public: double simTime = 0;
 
     /// \brief Prevent multiple calls to Init loading visuals twice...
-    public: bool isInitialised;
+    public: bool isInitialised = false;
 
     // OGRE objects for reflection/refraction
     public: gazebo::rendering::ScenePtr scene;
-    public: Ogre::Entity* oceanEntity;
+    public: Ogre::Entity* oceanEntity = nullptr;
     public: Ogre::MovablePlane planeUp;
     public: Ogre::MovablePlane planeDown;
-    public: Ogre::TextureUnitState *reflectTex;
-    public: Ogre::TextureUnitState *refractTex;
+    public: Ogre::TextureUnitState *reflectTex = nullptr;
+    public: Ogre::TextureUnitState *refractTex = nullptr;
 
     // Vectors of OGRE objects
     public: std::vector<Ogre::Camera*> cameras;
@@ -500,13 +502,18 @@ namespace asv
 
   void WavefieldVisualPlugin::CreateRtts(Ogre::Camera* _camera)
   {
+    // Preserve the camera aspect ratio in the texture.
+    const double kScale = 0.25;
+    const int kWidth    = _camera->getViewport()->getActualWidth() * kScale;
+    const int kHeight   = _camera->getViewport()->getActualHeight() * kScale;
+
     // Create reflection texture
     Ogre::TexturePtr rttReflectionTexture =
       Ogre::TextureManager::getSingleton().createManual(
         this->data->visualName + "_" + _camera->getName() + "_reflection",
         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
         Ogre::TEX_TYPE_2D,
-        512, 512,
+        kWidth, kHeight,
         0,
         Ogre::PF_R8G8B8,
         Ogre::TU_RENDERTARGET);
@@ -517,7 +524,7 @@ namespace asv
         this->data->visualName + "_" + _camera->getName() + "_refraction",
         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
         Ogre::TEX_TYPE_2D,
-        512, 512,
+        kWidth, kHeight,
         0,
         Ogre::PF_R8G8B8,
         Ogre::TU_RENDERTARGET);
@@ -567,17 +574,22 @@ namespace asv
   {
     std::vector<rendering::CameraPtr> retVal;
 
-    for (unsigned int i = 0; i < this->data->scene->CameraCount(); ++i)
+    auto sensors = sensors::SensorManager::Instance()->GetSensors();
+    for (auto sensor : sensors)
     {
-      // Add new cameras
-      rendering::CameraPtr c = this->data->scene->GetCamera(i);
-      if (std::find(this->data->cameras.begin(), this->data->cameras.end(),
-                    c->OgreCamera()) == this->data->cameras.end())
+      if (sensor->Type() == "camera")
       {
-        retVal.push_back(c);
+        rendering::CameraPtr c = this->data->scene->GetCamera(
+            this->data->scene->StripSceneName(sensor->ScopedName()));
+
+        if (c && std::find(this->data->cameras.begin(),
+            this->data->cameras.end(),
+            c->OgreCamera()) == this->data->cameras.end())
+        {
+          retVal.push_back(c);
+        }
       }
     }
-
     return retVal;
   }
 
