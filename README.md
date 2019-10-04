@@ -1,3 +1,32 @@
+## vrx (melodic) - 1.2.6-1
+
+The packages in the `vrx` repository were released into the `melodic` distro by running `/usr/bin/bloom-release vrx --rosdistro melodic` on `Fri, 04 Oct 2019 19:55:41 -0000`
+
+These packages were released:
+- `usv_gazebo_plugins`
+- `vrx_gazebo`
+- `wamv_description`
+- `wamv_gazebo`
+- `wave_gazebo`
+- `wave_gazebo_plugins`
+
+Version of package(s) in repository `vrx`:
+
+- upstream repository: https://bitbucket.org/osrf/vrx
+- release repository: https://github.com/ros-gbp/vrx-release.git
+- rosdistro version: `1.2.5-1`
+- old version: `1.2.5-1`
+- new version: `1.2.6-1`
+
+Versions of tools used:
+
+- bloom version: `0.8.0`
+- catkin_pkg version: `0.4.13`
+- rosdep version: `0.16.1`
+- rosdistro version: `0.7.4`
+- vcstools version: `0.1.42`
+
+
 ## vrx (kinetic) - 1.2.6-1
 
 The packages in the `vrx` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release vrx --rosdistro kinetic` on `Fri, 04 Oct 2019 19:01:19 -0000`
