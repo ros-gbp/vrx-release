@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>vrx_gazebo</name>
-  <version>1.2.5</version>
+  <version>1.2.6</version>
   <description>
     The ROS package for the RobotX competition running in Gazebo.
   </description>
@@ -27,6 +27,7 @@
   <depend>xacro</depend>
   <export>
     <gazebo_ros gazebo_model_path="${prefix}/models"/>
+    <gazebo_ros gazebo_model_path="${prefix}/models/dock_permutations"/>
     <gazebo_ros gazebo_media_path="${prefix}"/>
   </export>
 </package>
