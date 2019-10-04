@@ -2,6 +2,9 @@
 Changelog for package usv_gazebo_plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.6 (2019-10-04)
+------------------
+
 1.2.5 (2019-09-19)
 ------------------
 * merging default into branch
