@@ -98,7 +98,8 @@ void StationkeepingScoringPlugin::Load(gazebo::physics::WorldPtr _world,
     this->waypointMarkers.Load(_sdf->GetElement("markers"));
     if (this->waypointMarkers.IsAvailable())
     {
-      if (!this->waypointMarkers.DrawMarker(0, this->goalX, this->goalY))
+      if (!this->waypointMarkers.DrawMarker(0, this->goalX, this->goalY,
+            this->goalYaw))
       {
         gzerr << "Error creating visual marker" << std::endl;
       }
@@ -146,7 +147,7 @@ void StationkeepingScoringPlugin::Update()
   double headError = 1 - abs(dhdg - M_PI)/M_PI;
 
   this->poseError  = sqrt(pow(dx, 2) + pow(dy, 2)) + headError;
-  this->totalPoseError += poseError;
+  this->totalPoseError += this->poseError;
   this->sampleCount++;
 
   this->meanError = this->totalPoseError / this->sampleCount;
