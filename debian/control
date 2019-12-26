@@ -1,0 +1,12 @@
+Source: ros-melodic-wave-gazebo-plugins
+Section: misc
+Priority: optional
+Maintainer: Rhys Mainwaring <rhys.mainwaring@me.com>
+Build-Depends: debhelper (>= 9.0.0), libeigen3-dev, ros-melodic-catkin, ros-melodic-gazebo-ros
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-melodic-wave-gazebo-plugins
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-gazebo-ros
+Description: This package contains Gazebo plugins for the simulation of water surface waves and hydrostatic and hydrodynamics forces.
